@@ -1,24 +1,25 @@
+from flask import Flask, request, jsonify, render_template
 import pickle
-from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# Model ve vektörleştiriciyi yükle
+# Model ve vektörizer yükleniyor
 model = pickle.load(open("model.pkl", "rb"))
 vectorizer = pickle.load(open("vectorizer.pkl", "rb"))
 
-@app.route('/predict', methods=['POST'])
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+@app.route("/predict", methods=["POST"])
 def predict():
-    data = request.get_json()
-    text = data.get("text", "")
-    
+    text = request.form.get("text")
     if not text:
-        return jsonify({"error": "Metin girilmedi."}), 400
+        return render_template("index.html", prediction="No review was entered.")
 
-    vec = vectorizer.transform([text])
-    prediction = model.predict(vec)[0]
+    vect_text = vectorizer.transform([text])
+    prediction = model.predict(vect_text)[0]
+    return render_template("index.html", prediction=f"Predicted Rating: {prediction}")
 
-    return jsonify({"score": int(prediction)})
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
